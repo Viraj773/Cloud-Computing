@@ -27,6 +27,7 @@ s3=boto3.client(
     #change the above when starting the lab
 )
 
+# T1 creates login_table and adds the data into the table in Dynamo DB
 def login_table():
     try:
         print('Login Table....') #just for testing on local machine
@@ -50,7 +51,7 @@ def login_table():
             print("Table already exists. Skipping creation.")
         else:
             print(f"Error: {e}")
-            
+
 def login_data():
     l_table=dynamodb.Table('login')
     stu_id='s4087536'
@@ -70,6 +71,7 @@ def login_data():
     except Exception as e:
         print(f'Error adding data in login table: {e}')
 
+# T2 creates music table in Dynamo DB
 def music_table():
     try:
         print('Music Table Loading...')
@@ -95,7 +97,8 @@ def music_table():
             print("Table already exists. Skipping creation.")
         else:
             print(f"Error: {e}")
-            
+  
+#T3 reads the json file and adds data to the music table          
 def music_data(f_name):
     m_table=dynamodb.Table('music')
     try:
@@ -126,7 +129,7 @@ def music_data(f_name):
         
         
 
-
+# T4 automatically downloads the images from the url and adds them to the S3 bucket which is created.
 def initialize_s3bucket():
     try:
         s3.create_bucket(Bucket=BUCKET_NAME)
