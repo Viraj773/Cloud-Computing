@@ -1,27 +1,26 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import boto3
+app = Flask(__name__)
+app.secret_key = 'musicapp2026'
 
-app=Flask(__name__)
-app.secret_key='musicapp2026' #Needed for session management
-
-#AWS credentials- Needs to be updated every time you start lab
-dynamodb =boto3.resource(
+# AWS credentials - update these every time you start the lab
+dynamodb = boto3.resource(
     'dynamodb',
     region_name='us-east-1',
-    aws_access_key_id='ASIAVKS35N6MGGVTVTK2',
-    aws_secret_access_key='qJ8vT9vFw3Nqyk0SYw/GPDJXRvVnHnjKMfVZxjoN',
-    aws_session_token='IQoJb3JpZ2luX2VjEFcaCXVzLXdlc3QtMiJGMEQCIB1gQi+V2fhU1RuvpcBp4/QOQyByRQNX+jzBMdgc6UzaAiAXOrPGnlGgwLeaVmaq7xIyzspne7+rBclVouPnwRRL0Sq2AgggEAQaDDM2NjMzODczMTkyOCIM4fFolHygcWrRRsd6KpMCwc1vynLwpCKbuZ27BGvubjcMpQcMwpoOEAVKqaUzFGU5s6CvxVoZ7ksWhOm0oGX7yQmXN7AX4qqwcnfZubYSMnU9MbwVzHGw1MmALXP5jBl+Mapwl/tzt5bZXN0hXXYjaLlBG/OmThpXMe+gpPd2GkMJkg7SkUBAz4kz5ipY0+rX6SUMovE4YwDwSnBpolv1QEhUwPkvF3fT3EgMU5HErhDuBfEsm3T7BDHXcCqKGOqP3OyfbT6GwCyQ99yJc2l5/ejmUgpoBweMKxM3qWmlMcJecHZ7nhfJQ1iM2bm9Fd05budU2RSyjNLIxUAalm27M4T5qThRNb9oA1B/4aP11Mp3k7cnq05tBRQiqVnqJ3PSOcUwpPeYzwY6ngEyPpvAlzkI1Db45wX2Ka+Se/rstJ1PMfKCbg7wc5NbV5wvUq+R+SdTxjfgkuIB7Io4kP27i0qfjIwsoYdXKLLJYtI2qBtEdNYJcPdImLXl8CyePQmGKNRTr4w128kmPppv9KvZdSjDunpZvcjYwHOUqYNTLevMH8aXx/msEo6B9CTEHni0c52Zh3/Gz9jetZeDoZpBpIt49XaXVhzU8Q==',
+    aws_access_key_id='ASIAVKS35N6MD6LA374J',
+    aws_secret_access_key='jlqlXmby5n0F0+t7FOx1Isvtav+32LsNpViA0UuW',
+    aws_session_token='IQoJb3JpZ2luX2VjEIf//////////wEaCXVzLXdlc3QtMiJHMEUCIQCwsZOK02ZaLth0Pzad4ZTBT0cQf0hpEzDwPLeqnP9EigIgVhQDIxRGEgN4km+xn5aWJBxBwy0mcaGSMSSPvBnkLiMqtgIIUBAEGgwzNjYzMzg3MzE5MjgiDI7+4zYNFWW3T6e4MiqTAirmeAYBmczFxMI2otCLJbxXpgogcOZwh4LIdYyG/qArSgFJpkgMHYloC4FitPpEkE8zHj5AOkLo0dW531t+0E4nf6YgFhSRnAmkgJnuBvXcgTpvSxOBlLiqKocVxsuRwGtCqYNhFaBEmr6z9yCTyBzvr2K41XsPh9NMwyCf0Qy5AE3s56qt6V/C/tn5E8M4e3T/w2aoshWRX7pEBc7ugWEC+ZMJjsG2fDvKScF9EY4289waF4EZGvfBiRED9hdqvJYLyP6f3o1vAdcnbhhRw+8c7ZtZa1d7nNGvwRhruHThRwUVxlJojBCbNlTqWwkhZb7boI/0iBHbdUf3b85p3cQYtdlJs4t778TQpB8rFKTZhyH4MN7Co88GOp0BrRexvytmwLNxnEnBUsq1H04tLKNEmNejRA0HfalgdScNN1xnTi/gSpVnQiJqNE3IvlnFH+oAFoRtM2t5Zrayi6LeyuffIFFgzckjktcjId6XXLp64Wlead/aH8cP3jihgO6bH45LW3nrxrA62wxecOUGNAF+dMhTR3L3qpqAi198DWOEw0LeK2Y7ve4W1AOY3ZlDWYT1tIIqOU+bJQ=='
 )
 
-# =====================
 # LOGIN PAGE
-# =====================
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        
         table = dynamodb.Table('login')
         response = table.get_item(Key={'email': email})
         user = response.get('Item')
@@ -35,19 +34,50 @@ def login():
     
     return render_template('login.html', error=error)
 
-# =====================
-# LOGOUT
-# =====================
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
+# REGISTER PAGE
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    error = None
+    if request.method == 'POST':
+        email = request.form['email']
+        username = request.form['username']
+        password = request.form['password']
+
+        table = dynamodb.Table('login')
+
+        # Check if email already exists
+        response = table.get_item(Key={'email': email})
+        user = response.get('Item')
+
+        if user:
+            error = 'The email already exists'
+        else:
+            # Save new user to DynamoDB
+            table.put_item(
+                Item={
+                    'email': email,
+                    'user_name': username,
+                    'password': password
+                }
+            )
+            return redirect(url_for('login'))
+
+    return render_template('register.html', error=error)
+
+# MAIN PAGE (temporary)
 @app.route('/main')
 def main():
     if 'email' not in session:
         return redirect(url_for('login'))
     return f"Welcome {session['username']}! Main page coming soon..."
+
+# LOGOUT
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
