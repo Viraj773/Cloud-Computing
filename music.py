@@ -13,17 +13,17 @@ dynamodb = boto3.resource(
     'dynamodb',
     region_name='us-east-1',
     #endpoint_url='http://localhost:8000', # local port no on LM
-    aws_access_key_id='ASIAVKS35N6MFIVSXQ4I',          #change this when starting the lab
-    aws_secret_access_key='5kFmpRvaOqa5S1ngKx/5kDN+IYrt/uZPXspK4CBq',  #change this when starting the lab
-    aws_session_token='IQoJb3JpZ2luX2VjEE0aCXVzLXdlc3QtMiJHMEUCIQDTkCtUk9pHfMsPatY1OjJLcITnnEmVP1H5+Cd8NJIb9QIgGnPqz+Xy/YgAcPbs46sThH5juOyi61aUQkdkVn0622UqtgIIFhAEGgwzNjYzMzg3MzE5MjgiDIUgYYFuQJ3H+VTKwCqTAtPEeqz1Lu1qqP9xbKpi/YYg4Uz2cjHVZyBv8Nes34vFEd/yqhOuGdIndaelElRwa+8t+b892dtLp2TVXiJhJmjCDXc9jGHdaP1IJR/hFO13A2jWXiOyLbuBgXQtm5hi0wvA8cYYWNuoQ3Z3tiYRjWleSPVYqBDtjIW1s1SPyXqOUPdt/xp4goImmeWGCxgHkvS4IuMHM1v2CVAaHWgdLGS/n2s3Vow8L+t5tYChEMsWlorW8mJcyqveTBvytLHGMsVc6CkMvlW2g3PQLuSxA2Op4qeE5A5VJ1XeTwrdmI9Nr4h/r3SiYGHUe6x5a640fU0e7VotSd4C5ehhiSyKCN8PpYgDXVFXUu59TQSr6RT/xaOdMJzals8GOp0B2grS5Cq7t1x0vOIeq/EuuSW1zW+2MRY3w1hXfZB7JSo2HwRVnqPtl+sOYbMddsQ6cyIf+4dDFEu4fs4+OfqkiucWGMA82UMPdrqvUdRPaiyAkqErq9RbDq8oXOZeDZyI3I7mOCbqqV/zeJEYRapd8/3wOQWlKgmooXhCuob+MqT51ucWC0wQPfdVzRtachahn9SgjPS0JumTpk4l2w==' #change this when starting the lab
+    aws_access_key_id='ASIAVKS35N6MCSAFBUW6',          #change this when starting the lab
+    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c',  #change this when starting the lab
+    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q==' #change this when starting the lab
 )
 
 s3=boto3.client(
     's3',
     region_name='us-east-1',
-    aws_access_key_id='ASIAVKS35N6MFIVSXQ4I', #Change this when starting the lab
-    aws_secret_access_key='5kFmpRvaOqa5S1ngKx/5kDN+IYrt/uZPXspK4CBq', #change this when starting the AWS lab
-    aws_session_token='IQoJb3JpZ2luX2VjEE0aCXVzLXdlc3QtMiJHMEUCIQDTkCtUk9pHfMsPatY1OjJLcITnnEmVP1H5+Cd8NJIb9QIgGnPqz+Xy/YgAcPbs46sThH5juOyi61aUQkdkVn0622UqtgIIFhAEGgwzNjYzMzg3MzE5MjgiDIUgYYFuQJ3H+VTKwCqTAtPEeqz1Lu1qqP9xbKpi/YYg4Uz2cjHVZyBv8Nes34vFEd/yqhOuGdIndaelElRwa+8t+b892dtLp2TVXiJhJmjCDXc9jGHdaP1IJR/hFO13A2jWXiOyLbuBgXQtm5hi0wvA8cYYWNuoQ3Z3tiYRjWleSPVYqBDtjIW1s1SPyXqOUPdt/xp4goImmeWGCxgHkvS4IuMHM1v2CVAaHWgdLGS/n2s3Vow8L+t5tYChEMsWlorW8mJcyqveTBvytLHGMsVc6CkMvlW2g3PQLuSxA2Op4qeE5A5VJ1XeTwrdmI9Nr4h/r3SiYGHUe6x5a640fU0e7VotSd4C5ehhiSyKCN8PpYgDXVFXUu59TQSr6RT/xaOdMJzals8GOp0B2grS5Cq7t1x0vOIeq/EuuSW1zW+2MRY3w1hXfZB7JSo2HwRVnqPtl+sOYbMddsQ6cyIf+4dDFEu4fs4+OfqkiucWGMA82UMPdrqvUdRPaiyAkqErq9RbDq8oXOZeDZyI3I7mOCbqqV/zeJEYRapd8/3wOQWlKgmooXhCuob+MqT51ucWC0wQPfdVzRtachahn9SgjPS0JumTpk4l2w=='
+    aws_access_key_id='ASIAVKS35N6MCSAFBUW6', #Change this when starting the lab
+    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c', #change this when starting the AWS lab
+    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q=='
 )
 
 # T1 creates login_table and adds the data into the table in Dynamo DB
