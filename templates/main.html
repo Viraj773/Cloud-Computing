@@ -18,17 +18,20 @@
         <!-- SUBSCRIPTION AREA -->
         <div class="subscription-area">
             <h3>Your Subscriptions</h3>
+
             {% if subscriptions %}
                 {% for song in subscriptions %}
                 <div class="song-card">
-                    <img src="{{ song['presigned_url'] }}" alt="artist image" width="80">
+                    <img src="{{ song['presigned_url'] }}" alt="{{ song['artist'] }} artist image" width="80">
+
                     <p><strong>Title:</strong> {{ song['title'] }}</p>
                     <p><strong>Artist:</strong> {{ song['artist'] }}</p>
                     <p><strong>Year:</strong> {{ song['year'] }}</p>
                     <p><strong>Album:</strong> {{ song['album'] }}</p>
+
+                    <!-- song_id removes the exact song, even if two songs have the same title -->
                     <form method="POST" action="/remove">
-                        <input type="hidden" name="title" value="{{ song['title'] }}">
-                        <input type="hidden" name="artist" value="{{ song['artist'] }}">
+                        <input type="hidden" name="song_id" value="{{ song['song_id'] }}">
                         <button type="submit">Remove</button>
                     </form>
                 </div>
@@ -43,6 +46,7 @@
         <!-- QUERY AREA -->
         <div class="query-area">
             <h3>Search Songs</h3>
+
             <form method="POST" action="/query">
                 <label>Title:</label>
                 <input type="text" name="title"><br><br>
@@ -59,29 +63,35 @@
                 <button type="submit">Query</button>
             </form>
 
+            {% if query_message %}
+                <p class="error">{{ query_message }}</p>
+            {% endif %}
+
             <!-- QUERY RESULTS -->
-            {% if query_results is not none %}
-                {% if query_results %}
-                    {% for song in query_results %}
-                    <div class="song-card">
-                        <img src="{{ song['presigned_url'] }}" alt="artist image" width="80">
-                        <p><strong>Title:</strong> {{ song['title'] }}</p>
-                        <p><strong>Artist:</strong> {{ song['artist'] }}</p>
-                        <p><strong>Year:</strong> {{ song['year'] }}</p>
-                        <p><strong>Album:</strong> {{ song['album'] }}</p>
-                        <form method="POST" action="/subscribe">
-                            <input type="hidden" name="title" value="{{ song['title'] }}">
-                            <input type="hidden" name="artist" value="{{ song['artist'] }}">
-                            <input type="hidden" name="year" value="{{ song['year'] }}">
-                            <input type="hidden" name="album" value="{{ song['album'] }}">
-                            <input type="hidden" name="img_url" value="{{ song['img_url'] }}">
-                            <button type="submit">Subscribe</button>
-                        </form>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No result is retrieved. Please query again.</p>
-                {% endif %}
+            {% if query_results is not none and query_results %}
+                {% for song in query_results %}
+                <div class="song-card">
+                    <img src="{{ song['presigned_url'] }}" alt="{{ song['artist'] }} artist image" width="80">
+
+                    <p><strong>Title:</strong> {{ song['title'] }}</p>
+                    <p><strong>Artist:</strong> {{ song['artist'] }}</p>
+                    <p><strong>Year:</strong> {{ song['year'] }}</p>
+                    <p><strong>Album:</strong> {{ song['album'] }}</p>
+
+                    <!-- Hidden fields let Flask save the exact selected song -->
+                    <form method="POST" action="/subscribe">
+                        <input type="hidden" name="song_id" value="{{ song['song_id'] }}">
+                        <input type="hidden" name="title" value="{{ song['title'] }}">
+                        <input type="hidden" name="artist" value="{{ song['artist'] }}">
+                        <input type="hidden" name="year" value="{{ song['year'] }}">
+                        <input type="hidden" name="album" value="{{ song['album'] }}">
+                        <input type="hidden" name="img_url" value="{{ song['img_url'] }}">
+                        <input type="hidden" name="s3_key" value="{{ song['s3_key'] }}">
+
+                        <button type="submit">Subscribe</button>
+                    </form>
+                </div>
+                {% endfor %}
             {% endif %}
         </div>
 

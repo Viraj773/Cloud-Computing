@@ -1,181 +1,350 @@
-import boto3
 import json
-import requests
 from io import BytesIO
+
+import boto3
+import requests
 from botocore.exceptions import ClientError
 
+# AWS credentials - update these every time you start the AWS Academy lab
+REGION_NAME = "us-east-1"
 
+AWS_ACCESS_KEY_ID = "PASTE_ACCESS_KEY_HERE"
+AWS_SECRET_ACCESS_KEY = "PASTE_SECRET_KEY_HERE"
+AWS_SESSION_TOKEN = "PASTE_SESSION_TOKEN_HERE"
 
-BUCKET_NAME='s4078067-mybucket'  #change this according to your student no for testing purposes
+# Change this according to your student no. for testing
+BUCKET_NAME = "s4098345-mybucket"
 
-# change the port no in endpoint url acc to your terminal
+LOGIN_TABLE = "login"
+MUSIC_TABLE = "music"
+SUBSCRIPTIONS_TABLE = "subscriptions"
+
+SONGS_FILE = "2026a2_songs.json"
+
 dynamodb = boto3.resource(
-    'dynamodb',
-    region_name='us-east-1',
-    #endpoint_url='http://localhost:8000', # local port no on LM
-    aws_access_key_id='ASIAVKS35N6MCSAFBUW6',          #change this when starting the lab
-    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c',  #change this when starting the lab
-    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q==' #change this when starting the lab
+    "dynamodb",
+    region_name=REGION_NAME,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    aws_session_token=AWS_SESSION_TOKEN
 )
 
-s3=boto3.client(
-    's3',
-    region_name='us-east-1',
-    aws_access_key_id='ASIAVKS35N6MCSAFBUW6', #Change this when starting the lab
-    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c', #change this when starting the AWS lab
-    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q=='
+s3 = boto3.client(
+    "s3",
+    region_name=REGION_NAME,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    aws_session_token=AWS_SESSION_TOKEN
 )
 
-# T1 creates login_table and adds the data into the table in Dynamo DB
-def login_table():
+
+# HELPER FUNCTIONS
+
+def make_song_id(song):
+    # title + artist was not enough because the dataset has duplicate title/artist pairs
+    return f"{song['title']}#{song['album']}#{song['year']}"
+
+
+def make_s3_key(img_url):
+    # Stores images in a clean S3 folder
+    filename = img_url.split("/")[-1]
+    return f"artist-images/{filename}"
+
+
+def table_exists(table_name):
+    # Checks if a DynamoDB table already exists
     try:
-        print('Login Table....') #just for testing on local machine
-        login_tab=dynamodb.create_table(
-            TableName='login',
-            KeySchema=[  #Basically defining the primary key
-                {'AttributeName': 'email', 'KeyType': 'HASH'}  # Key Type is the Partition Key
+        dynamodb.meta.client.describe_table(TableName=table_name)
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            return False
+        raise
+
+
+# LOGIN TABLE
+
+def create_login_table():
+    try:
+        if table_exists(LOGIN_TABLE):
+            print(f"{LOGIN_TABLE} table already exists. Skipping creation.")
+            return
+
+        print(f"Creating {LOGIN_TABLE} table...")
+
+        login_tab = dynamodb.create_table(
+            TableName=LOGIN_TABLE,
+            KeySchema=[
+                {"AttributeName": "email", "KeyType": "HASH"}
             ],
-            AttributeDefinitions=[  #Defines the datatype 
-                {'AttributeName': 'email', 'AttributeType': 'S'}
+            AttributeDefinitions=[
+                {"AttributeName": "email", "AttributeType": "S"}
             ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
-            }
+            BillingMode="PAY_PER_REQUEST"
         )
-        login_tab.meta.client.get_waiter('table_exists').wait(TableName='login')
-        print("Table created successfully!")
+
+        login_tab.meta.client.get_waiter("table_exists").wait(TableName=LOGIN_TABLE)
+        print("Login table created successfully.")
+
     except Exception as e:
-        if "ResourceInUseException" in str(e):
-            print("Table already exists. Skipping creation.")
-        else:
-            print(f"Error: {e}")
+        print(f"Error creating login table: {e}")
+
 
 def login_data():
-    l_table=dynamodb.Table('login')
-    stu_id='s4087536'
-    stu_name='MaitreyaKadam'
+    # Adds the 10 required login users
+    l_table = dynamodb.Table(LOGIN_TABLE)
+
+    student_id = "s4087536"
+    student_name = "MaitreyaKadam"
+
     try:
         with l_table.batch_writer() as batch:
             for i in range(10):
-                email=f"{stu_id}{i}@student.rmit.edu.au"
-                user_name=f"{stu_name}{i}"
-                password=''.join([str((i+j)%10)for j in range(6)])
-                batch.put_item(
-                    Item={'email':email,
-                          'user_name':user_name,
-                          'password':password}
-                )
-        # print('Added 10 users')
-    except Exception as e:
-        print(f'Error adding data in login table: {e}')
+                email = f"{student_id}{i}@student.rmit.edu.au"
+                user_name = f"{student_name}{i}"
+                password = "".join(str((i + j) % 10) for j in range(6))
 
-# T2 creates music table in Dynamo DB
+                batch.put_item(
+                    Item={
+                        "email": email,
+                        "user_name": user_name,
+                        "password": password
+                    }
+                )
+
+        print("Added 10 users to login table.")
+
+    except Exception as e:
+        print(f"Error adding login data: {e}")
+
+
+# MUSIC TABLE
+
 def music_table():
     try:
-        print('Music Table Loading...')
-        music_tab=dynamodb.create_table(
-            TableName='music',
+        if table_exists(MUSIC_TABLE):
+            print(f"{MUSIC_TABLE} table already exists. Skipping creation.")
+            print("If it uses the old title + artist schema, delete it and rerun this script.")
+            return
+
+        print(f"Creating {MUSIC_TABLE} table...")
+
+        music_tab = dynamodb.create_table(
+            TableName=MUSIC_TABLE,
             KeySchema=[
-                {'AttributeName': 'title', 'KeyType': 'HASH'},#PK
-                {'AttributeName': 'artist', 'KeyType': 'RANGE'} #SK
+                {"AttributeName": "artist", "KeyType": "HASH"},
+                {"AttributeName": "song_id", "KeyType": "RANGE"}
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'title', 'AttributeType': 'S'},
-                {'AttributeName': 'artist', 'AttributeType': 'S'}
+                {"AttributeName": "artist", "AttributeType": "S"},
+                {"AttributeName": "song_id", "AttributeType": "S"},
+                {"AttributeName": "album", "AttributeType": "S"},
+                {"AttributeName": "title", "AttributeType": "S"},
+                {"AttributeName": "year", "AttributeType": "S"}
             ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
-            }
+            LocalSecondaryIndexes=[
+                {
+                    "IndexName": "artist-album-index",
+                    "KeySchema": [
+                        {"AttributeName": "artist", "KeyType": "HASH"},
+                        {"AttributeName": "album", "KeyType": "RANGE"}
+                    ],
+                    "Projection": {
+                        "ProjectionType": "ALL"
+                    }
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    "IndexName": "title-year-index",
+                    "KeySchema": [
+                        {"AttributeName": "title", "KeyType": "HASH"},
+                        {"AttributeName": "year", "KeyType": "RANGE"}
+                    ],
+                    "Projection": {
+                        "ProjectionType": "ALL"
+                    }
+                }
+            ],
+            BillingMode="PAY_PER_REQUEST"
         )
-        music_tab.meta.client.get_waiter('table_exists').wait(TableName='music')
-        print("Table created successfully!")
-    except Exception as e:
-        if "ResourceInUseException" in str(e):
-            print("Table already exists. Skipping creation.")
-        else:
-            print(f"Error: {e}")
-  
-#T3 reads the json file and adds data to the music table          
-def music_data(f_name):
-    m_table=dynamodb.Table('music')
-    try:
-        with open(f_name,'r') as f:
-            m_data=json.load(f)
-            song_l=m_data['songs']
-        print(f'Loading {len(song_l)} songs...')
-        music_keys=set()
-        u_songs=[]
-        duplicates=0
-        for e_song in song_l:
-            combo=(e_song['title'],e_song['artist'])
-            if combo in music_keys:
-                duplicates+=1
-            else:
-                music_keys.add(combo)
-                u_songs.append(e_song)
-        if duplicates==0:
-            print('No duplicates')
-        else:
-            print(f'Total duplicates found and omitted: {duplicates}')  
-        with m_table.batch_writer() as batch:
-            for e_song in u_songs:
-                batch.put_item(Item=e_song)      
-        print(f'Loaded {len(u_songs)} songs into the music table')
-    except Exception as e:
-        print(f'An error has occurred: {e}')
-        
-        
 
-# T4 automatically downloads the images from the url and adds them to the S3 bucket which is created.
+        music_tab.meta.client.get_waiter("table_exists").wait(TableName=MUSIC_TABLE)
+        print("Music table created with PK artist, SK song_id, one LSI and one GSI.")
+
+    except Exception as e:
+        print(f"Error creating music table: {e}")
+
+
+def music_data(f_name):
+    # Loads all 137 songs without dropping duplicate title/artist songs
+    m_table = dynamodb.Table(MUSIC_TABLE)
+
+    try:
+        with open(f_name, "r", encoding="utf-8") as f:
+            m_data = json.load(f)
+            song_l = m_data["songs"]
+
+        print(f"Loading {len(song_l)} songs...")
+
+        unique_keys = set()
+
+        with m_table.batch_writer() as batch:
+            for e_song in song_l:
+                song_id = make_song_id(e_song)
+                s3_key = make_s3_key(e_song["img_url"])
+
+                unique_key = (e_song["artist"], song_id)
+
+                if unique_key in unique_keys:
+                    raise ValueError(f"Duplicate generated key found: {unique_key}")
+
+                unique_keys.add(unique_key)
+
+                batch.put_item(
+                    Item={
+                        "artist": e_song["artist"],
+                        "song_id": song_id,
+                        "title": e_song["title"],
+                        "year": str(e_song["year"]),
+                        "album": e_song["album"],
+                        "img_url": e_song["img_url"],
+                        "s3_key": s3_key
+                    }
+                )
+
+        print(f"Loaded {len(unique_keys)} songs into the music table.")
+
+    except Exception as e:
+        print(f"An error has occurred while loading music data: {e}")
+
+
+# SUBSCRIPTIONS TABLE
+
+def create_subscriptions_table():
+    try:
+        if table_exists(SUBSCRIPTIONS_TABLE):
+            print(f"{SUBSCRIPTIONS_TABLE} table already exists. Skipping creation.")
+            print("If it uses email + title, delete it and rerun this script.")
+            return
+
+        print(f"Creating {SUBSCRIPTIONS_TABLE} table...")
+
+        sub_tab = dynamodb.create_table(
+            TableName=SUBSCRIPTIONS_TABLE,
+            KeySchema=[
+                {"AttributeName": "email", "KeyType": "HASH"},
+                {"AttributeName": "song_id", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "email", "AttributeType": "S"},
+                {"AttributeName": "song_id", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+
+        sub_tab.meta.client.get_waiter("table_exists").wait(TableName=SUBSCRIPTIONS_TABLE)
+        print("Subscriptions table created successfully.")
+
+    except Exception as e:
+        print(f"Error creating subscriptions table: {e}")
+
+
+# S3 BUCKET AND IMAGES
+
 def initialize_s3bucket():
     try:
         s3.create_bucket(Bucket=BUCKET_NAME)
+        print("S3 bucket created.")
+
     except ClientError as e:
-        if e.response['Error']['Code']=='BucketAlreadyOwnedByYou':
-            print('Bucket already exists')
-        elif e.response['Error']['Code']=='BucketAlreadyExists':
-            print('Bucket name is someone else ')
+        error_code = e.response["Error"]["Code"]
+
+        if error_code == "BucketAlreadyOwnedByYou":
+            print("Bucket already exists.")
+        elif error_code == "BucketAlreadyExists":
+            print("Bucket name is already taken by someone else.")
         else:
-            print(f"Error: {e}")
+            print(f"Error creating S3 bucket: {e}")
+
 
 def download_img(f_name):
+    # Downloads each unique artist image and uploads it to S3
     try:
-        with open(f_name,'r') as f:
-            m_data=json.load(f)
-            song_l=m_data['songs']
-        print('Found Songs')
-        downloaded_imgurls=set() #tracking the urls processed
+        with open(f_name, "r", encoding="utf-8") as f:
+            m_data = json.load(f)
+            song_l = m_data["songs"]
+
+        downloaded_imgurls = set()
+
         for e_song in song_l:
-            image=e_song.get('img_url') #image url
+            image = e_song.get("img_url")
+
             if not image or image in downloaded_imgurls:
                 continue
-            img_fname=image.split('/')[-1]
+
+            s3_key = make_s3_key(image)
+
             try:
-                #download the image into streaming memory
-                response=requests.get(image,timeout=10)
-                if response.status_code==200:
-                    s3.upload_fileobj(
-                        BytesIO(response.content),
-                        BUCKET_NAME,
-                        img_fname
-                    )
-                    downloaded_imgurls.add(image)
-                    #print('Uploaded image to S3')
-                else:
-                    print('Failed to download')
+                response = requests.get(image, timeout=15)
+                response.raise_for_status()
+
+                content_type = response.headers.get("Content-Type", "image/jpeg")
+
+                s3.upload_fileobj(
+                    BytesIO(response.content),
+                    BUCKET_NAME,
+                    s3_key,
+                    ExtraArgs={
+                        "ContentType": content_type
+                    }
+                )
+
+                downloaded_imgurls.add(image)
+                print(f"Uploaded {s3_key}")
+
             except Exception as de:
-                print(f'Error Processing {image}: {de}')
+                print(f"Error processing image {image}: {de}")
+
+        print(f"Uploaded {len(downloaded_imgurls)} unique artist images to S3.")
+
     except FileNotFoundError:
-        print('File not Found')
+        print("File not found.")
     except Exception as e:
-        print(f'Error: {e}')
+        print(f"Error: {e}")
+
+
+# DATASET CHECK
+
+def analyse_dataset(f_name):
+    # Shows why title + artist was not enough as a key
+    try:
+        with open(f_name, "r", encoding="utf-8") as f:
+            songs = json.load(f)["songs"]
+
+        total = len(songs)
+        unique_title_artist = len(set((s["title"], s["artist"]) for s in songs))
+        unique_full_identity = len(set((s["title"], s["artist"], s["album"], s["year"]) for s in songs))
+
+        print("Dataset analysis:")
+        print(f"Total songs: {total}")
+        print(f"Unique title + artist pairs: {unique_title_artist}")
+        print(f"Unique title + artist + album + year records: {unique_full_identity}")
+
+        if total != unique_title_artist:
+            print("title + artist is not unique enough. Using artist + song_id instead.")
+
+    except Exception as e:
+        print(f"Error analysing dataset: {e}")
+
 
 if __name__ == "__main__":
-    login_table()
+    analyse_dataset(SONGS_FILE)
+    create_login_table()
     login_data()
     music_table()
-    music_data('2026a2_songs.json')
+    music_data(SONGS_FILE)
+    create_subscriptions_table()
     initialize_s3bucket()
-    download_img('2026a2_songs.json')
+    download_img(SONGS_FILE)
+    print("Initialisation complete.")
