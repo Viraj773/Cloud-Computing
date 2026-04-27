@@ -1,255 +1,344 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 
 app = Flask(__name__)
-app.secret_key = 'musicapp2026'
+app.secret_key = "musicapp2026"
 
-# AWS credentials - update these every time you start the lab
+# AWS credentials - update these every time you start the AWS Academy lab
+REGION_NAME = "us-east-1"
+
+AWS_ACCESS_KEY_ID = "PASTE_ACCESS_KEY_HERE"
+AWS_SECRET_ACCESS_KEY = "PASTE_SECRET_KEY_HERE"
+AWS_SESSION_TOKEN = "PASTE_SESSION_TOKEN_HERE"
+
 dynamodb = boto3.resource(
-    'dynamodb',
-    region_name='us-east-1',
-    aws_access_key_id='ASIAVKS35N6MCSAFBUW6',
-    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c',
-    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q=='
+    "dynamodb",
+    region_name=REGION_NAME,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    aws_session_token=AWS_SESSION_TOKEN
 )
 
 s3 = boto3.client(
-    's3',
-    region_name='us-east-1',
-    aws_access_key_id='ASIAVKS35N6MCSAFBUW6',
-    aws_secret_access_key='lQIjuR57anw+1Wb+CJdILOzKUB74aY9Q2uIn/O3c',
-    aws_session_token='IQoJb3JpZ2luX2VjEM7//////////wEaCXVzLXdlc3QtMiJIMEYCIQDUpWs3j7mGHjlLqXkZP3DE27B/Hp/4VJbdzjzK+EBeowIhAJgyv4xey31tV1zwsJosiwldqDuO9AHXNqfKgvtwlY5IKr8CCJf//////////wEQBBoMMzY2MzM4NzMxOTI4IgwFf0s3/iB8wzvra9EqkwK9Bv0GDGAR3WUuWQ5iW1WQGowEZ4hmwHQqbnQ3KtceZQEwH1m4/Q/bPHvKMV6D718Pniq+f0eU3G8ktbOIEbromrBugybhag1KMWOJ8tGdt0Fun4tsPuRIihJir33bnHEelW6rRkwofwpK8Rx2EouNoAX12pODUE7rLCT2oVTy2fMbb9Y0uly+Q8DmsUfRn4jGSDw1L7Wk/dl0tg29g9BrqIIWnWhyVwvW7r7JdsAsJ5ZG7mPkiKNQSej+6d7qCtB7l+TCbWanWL1/+7swlJMjnhxkFJTyCqU8szPwNBrWgYB0dRtGJ8MsJCZYj7Ud8wcGVt2XHhglbbG01GS7Uglt83IVIkEjLVQy8Nf2ZIujlDpW2jCehLPPBjqcARC3zc9N2FWHnOOgnFh+7myFI7s9Pykh1eNCDVj/i+6L1ZzST90vcmC1SfdS/f3QASTlgTBYLNF6IYPzfSGE8ehRZxXitaLiqM2jEuD0pfI7ot95f396eED/livwPwHXfXrKpNYB89NN8NHGvVHHrfoPln65b1XR/gRt5mBc3rDBxa/HXv2Hl6qbWx06G+kEGLD2keeDKLVZ0HKB+Q=='
+    "s3",
+    region_name=REGION_NAME,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    aws_session_token=AWS_SESSION_TOKEN
 )
 
-BUCKET_NAME = 's4078067-mybucket'
+BUCKET_NAME = "s4098345-mybucket"
 
-# HELPER FUNCTION
+LOGIN_TABLE = "login"
+MUSIC_TABLE = "music"
+SUBSCRIPTIONS_TABLE = "subscriptions"
 
-def get_image_url(img_url):
-    img_filename = img_url.split('/')[-1]
-    url = s3.generate_presigned_url(
-        'get_object',
+
+# HELPER FUNCTIONS
+
+def make_song_id(title, album, year):
+    # This matches the song_id created in music.py
+    return f"{title}#{album}#{year}"
+
+
+def make_s3_key_from_img_url(img_url):
+    # Converts original image URL into the S3 path used in music.py
+    filename = img_url.split("/")[-1]
+    return f"artist-images/{filename}"
+
+
+def get_image_url(song):
+    # Creates a temporary secure S3 image URL
+    s3_key = song.get("s3_key")
+
+    if not s3_key and song.get("img_url"):
+        s3_key = make_s3_key_from_img_url(song["img_url"])
+
+    if not s3_key:
+        return ""
+
+    return s3.generate_presigned_url(
+        "get_object",
         Params={
-            'Bucket': BUCKET_NAME,
-            'Key': img_filename
+            "Bucket": BUCKET_NAME,
+            "Key": s3_key
         },
         ExpiresIn=3600
     )
-    return url
 
 
-# CREATE SUBSCRIPTIONS TABLE
+def add_presigned_urls(songs):
+    # Adds image links before sending songs to the HTML page
+    for song in songs:
+        song["presigned_url"] = get_image_url(song)
+    return songs
 
-def create_subscriptions_table():
-    try:
-        table = dynamodb.create_table(
-            TableName='subscriptions',
-            KeySchema=[
-                {'AttributeName': 'email', 'KeyType': 'HASH'},
-                {'AttributeName': 'title', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'email', 'AttributeType': 'S'},
-                {'AttributeName': 'title', 'AttributeType': 'S'}
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
-            }
-        )
-        table.meta.client.get_waiter('table_exists').wait(TableName='subscriptions')
-        print("Subscriptions table created!")
-    except Exception as e:
-        if "ResourceInUseException" in str(e):
-            print("Subscriptions table already exists.")
-        else:
-            print(f"Error: {e}")
+
+def get_user_subscriptions(email):
+    # Query is used here because email is the partition key
+    sub_table = dynamodb.Table(SUBSCRIPTIONS_TABLE)
+
+    response = sub_table.query(
+        KeyConditionExpression=Key("email").eq(email)
+    )
+
+    return add_presigned_urls(response.get("Items", []))
+
 
 # LOGIN PAGE
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def login():
     error = None
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
-        table = dynamodb.Table('login')
-        response = table.get_item(Key={'email': email})
-        user = response.get('Item')
-        
-        if user and user['password'] == password:
-            session['email'] = email
-            session['username'] = user['user_name']
-            return redirect(url_for('main'))
-        else:
-            error = 'email or password is invalid'
-    
-    return render_template('login.html', error=error)
+
+    if request.method == "POST":
+        email = request.form["email"].strip()
+        password = request.form["password"].strip()
+
+        login_table = dynamodb.Table(LOGIN_TABLE)
+
+        response = login_table.get_item(
+            Key={
+                "email": email
+            }
+        )
+
+        user = response.get("Item")
+
+        if user and user["password"] == password:
+            session["email"] = email
+            session["username"] = user["user_name"]
+            return redirect(url_for("main"))
+
+        error = "email or password is invalid"
+
+    return render_template("login.html", error=error)
+
 
 # REGISTER PAGE
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     error = None
-    if request.method == 'POST':
-        email = request.form['email']
-        username = request.form['username']
-        password = request.form['password']
 
-        table = dynamodb.Table('login')
-        response = table.get_item(Key={'email': email})
-        user = response.get('Item')
+    if request.method == "POST":
+        email = request.form["email"].strip()
+        username = request.form["username"].strip()
+        password = request.form["password"].strip()
 
-        if user:
-            error = 'The email already exists'
+        login_table = dynamodb.Table(LOGIN_TABLE)
+
+        response = login_table.get_item(
+            Key={
+                "email": email
+            }
+        )
+
+        existing_user = response.get("Item")
+
+        if existing_user:
+            error = "The email already exists"
         else:
-            table.put_item(
+            login_table.put_item(
                 Item={
-                    'email': email,
-                    'user_name': username,
-                    'password': password
+                    "email": email,
+                    "user_name": username,
+                    "password": password
                 }
             )
-            return redirect(url_for('login'))
 
-    return render_template('register.html', error=error)
+            return redirect(url_for("login"))
+
+    return render_template("register.html", error=error)
+
 
 # MAIN PAGE
 
-@app.route('/main')
+@app.route("/main")
 def main():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    # Get user's subscriptions
-    sub_table = dynamodb.Table('subscriptions')
-    response = sub_table.query(
-        KeyConditionExpression=Key('email').eq(session['email'])
-    )
-    subscriptions = response.get('Items', [])
+    if "email" not in session:
+        return redirect(url_for("login"))
 
-    # Generate pre-signed URLs for subscription images
-    for song in subscriptions:
-        if 'img_url' in song:
-            song['presigned_url'] = get_image_url(song['img_url'])
-    
-    return render_template('main.html', 
-                         username=session['username'],
-                         subscriptions=subscriptions,
-                         query_results=None)
+    subscriptions = get_user_subscriptions(session["email"])
+
+    return render_template(
+        "main.html",
+        username=session["username"],
+        subscriptions=subscriptions,
+        query_results=None,
+        query_message=None
+    )
+
 
 # QUERY SONGS
 
-@app.route('/query', methods=['POST'])
+@app.route("/query", methods=["POST"])
 def query():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    title = request.form.get('title', '').strip()
-    artist = request.form.get('artist', '').strip()
-    year = request.form.get('year', '').strip()
-    album = request.form.get('album', '').strip()
-    
-    music_table = dynamodb.Table('music')
-    filter_expression = []
-    expression_values = {}
-    expression_names = {}
+    if "email" not in session:
+        return redirect(url_for("login"))
 
-    if title:
-        filter_expression.append('#t = :title')
-        expression_values[':title'] = title
-        expression_names['#t'] = 'title'
-    if artist:
-        filter_expression.append('#a = :artist')
-        expression_values[':artist'] = artist
-        expression_names['#a'] = 'artist'
-    if year:
-        filter_expression.append('#y = :year')
-        expression_values[':year'] = year
-        expression_names['#y'] = 'year'
-    if album:
-        filter_expression.append('#al = :album')
-        expression_values[':album'] = album
-        expression_names['#al'] = 'album'
+    title = request.form.get("title", "").strip()
+    artist = request.form.get("artist", "").strip()
+    year = request.form.get("year", "").strip()
+    album = request.form.get("album", "").strip()
 
-    if not filter_expression:
-        return redirect(url_for('main'))
+    subscriptions = get_user_subscriptions(session["email"])
 
-    response = music_table.scan(
-        FilterExpression=' AND '.join(filter_expression),
-        ExpressionAttributeValues=expression_values,
-        ExpressionAttributeNames=expression_names
+    if not any([title, artist, year, album]):
+        return render_template(
+            "main.html",
+            username=session["username"],
+            subscriptions=subscriptions,
+            query_results=[],
+            query_message="Please enter at least one search field."
+        )
+
+    music_table = dynamodb.Table(MUSIC_TABLE)
+    query_results = []
+
+    # Case 1: Artist + album search uses the LSI
+    if artist and album:
+        response = music_table.query(
+            IndexName="artist-album-index",
+            KeyConditionExpression=Key("artist").eq(artist) & Key("album").eq(album)
+        )
+
+        query_results = response.get("Items", [])
+
+        if title:
+            query_results = [song for song in query_results if song.get("title") == title]
+        if year:
+            query_results = [song for song in query_results if song.get("year") == year]
+
+    # Case 2: Artist search uses the main table partition key
+    elif artist:
+        response = music_table.query(
+            KeyConditionExpression=Key("artist").eq(artist)
+        )
+
+        query_results = response.get("Items", [])
+
+        if title:
+            query_results = [song for song in query_results if song.get("title") == title]
+        if year:
+            query_results = [song for song in query_results if song.get("year") == year]
+        if album:
+            query_results = [song for song in query_results if song.get("album") == album]
+
+    # Case 3: Title search uses the GSI
+    elif title:
+        if year:
+            response = music_table.query(
+                IndexName="title-year-index",
+                KeyConditionExpression=Key("title").eq(title) & Key("year").eq(year)
+            )
+        else:
+            response = music_table.query(
+                IndexName="title-year-index",
+                KeyConditionExpression=Key("title").eq(title)
+            )
+
+        query_results = response.get("Items", [])
+
+        if album:
+            query_results = [song for song in query_results if song.get("album") == album]
+
+    # Case 4: Year-only or album-only search uses Scan as fallback
+    else:
+        filter_parts = []
+
+        if year:
+            filter_parts.append(Attr("year").eq(year))
+        if album:
+            filter_parts.append(Attr("album").eq(album))
+
+        filter_expression = filter_parts[0]
+
+        for condition in filter_parts[1:]:
+            filter_expression = filter_expression & condition
+
+        response = music_table.scan(
+            FilterExpression=filter_expression
+        )
+
+        query_results = response.get("Items", [])
+
+    query_results = add_presigned_urls(query_results)
+
+    query_message = None
+    if not query_results:
+        query_message = "No result is retrieved. Please query again"
+
+    return render_template(
+        "main.html",
+        username=session["username"],
+        subscriptions=subscriptions,
+        query_results=query_results,
+        query_message=query_message
     )
-    query_results = response.get('Items', [])
 
-    # Generate pre-signed URLs for query results
-    # Keep original img_url, store presigned in separate field
-    for song in query_results:
-        if 'img_url' in song:
-            song['presigned_url'] = get_image_url(song['img_url'])
-
-    # Get subscriptions
-    sub_table = dynamodb.Table('subscriptions')
-    sub_response = sub_table.query(
-        KeyConditionExpression=Key('email').eq(session['email'])
-    )
-    subscriptions = sub_response.get('Items', [])
-
-    # Generate pre-signed URLs for subscriptions
-    for song in subscriptions:
-        if 'img_url' in song:
-            song['presigned_url'] = get_image_url(song['img_url'])
-
-    return render_template('main.html',
-                         username=session['username'],
-                         subscriptions=subscriptions,
-                         query_results=query_results)
 
 # SUBSCRIBE TO A SONG
 
-@app.route('/subscribe', methods=['POST'])
+@app.route("/subscribe", methods=["POST"])
 def subscribe():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    sub_table = dynamodb.Table('subscriptions')
+    if "email" not in session:
+        return redirect(url_for("login"))
+
+    title = request.form["title"]
+    artist = request.form["artist"]
+    year = request.form["year"]
+    album = request.form["album"]
+    img_url = request.form["img_url"]
+    s3_key = request.form.get("s3_key", make_s3_key_from_img_url(img_url))
+
+    song_id = request.form.get("song_id") or make_song_id(title, album, year)
+
+    sub_table = dynamodb.Table(SUBSCRIPTIONS_TABLE)
+
     sub_table.put_item(
         Item={
-            'email': session['email'],
-            'title': request.form['title'],
-            'artist': request.form['artist'],
-            'year': request.form['year'],
-            'album': request.form['album'],
-            'img_url': request.form['img_url']  # saves original URL
+            "email": session["email"],
+            "song_id": song_id,
+            "title": title,
+            "artist": artist,
+            "year": year,
+            "album": album,
+            "img_url": img_url,
+            "s3_key": s3_key
         }
     )
-    return redirect(url_for('main'))
+
+    return redirect(url_for("main"))
+
 
 # REMOVE SUBSCRIPTION
 
-@app.route('/remove', methods=['POST'])
+@app.route("/remove", methods=["POST"])
 def remove():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    sub_table = dynamodb.Table('subscriptions')
+    if "email" not in session:
+        return redirect(url_for("login"))
+
+    sub_table = dynamodb.Table(SUBSCRIPTIONS_TABLE)
+
     sub_table.delete_item(
         Key={
-            'email': session['email'],
-            'title': request.form['title']
+            "email": session["email"],
+            "song_id": request.form["song_id"]
         }
     )
-    return redirect(url_for('main'))
+
+    return redirect(url_for("main"))
+
 
 # LOGOUT
 
-@app.route('/logout')
+@app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for("login"))
 
-if __name__ == '__main__':
-    create_subscriptions_table()
+
+if __name__ == "__main__":
     app.run(debug=True)
