@@ -5,37 +5,42 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 
-# AWS credentials - update these every time you start the AWS Academy lab
 REGION_NAME = "us-east-1"
 
 AWS_ACCESS_KEY_ID = "PASTE_ACCESS_KEY_HERE"
 AWS_SECRET_ACCESS_KEY = "PASTE_SECRET_KEY_HERE"
 AWS_SESSION_TOKEN = "PASTE_SESSION_TOKEN_HERE"
 
-# Change this according to your student no. for testing
-BUCKET_NAME = "s4098345-mybucket"
 
-LOGIN_TABLE = "login"
-MUSIC_TABLE = "music"
-SUBSCRIPTIONS_TABLE = "subscriptions"
+def using_placeholder_credentials():
+    return (
+        AWS_ACCESS_KEY_ID == "PASTE_ACCESS_KEY_HERE"
+        or AWS_SECRET_ACCESS_KEY == "PASTE_SECRET_KEY_HERE"
+        or AWS_SESSION_TOKEN == "PASTE_SESSION_TOKEN_HERE"
+    )
 
-SONGS_FILE = "2026a2_songs.json"
 
-dynamodb = boto3.resource(
-    "dynamodb",
-    region_name=REGION_NAME,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    aws_session_token=AWS_SESSION_TOKEN
-)
+if using_placeholder_credentials():
+    # On EC2 boto3 automatically uses LabInstanceProfile/LabRole
+    dynamodb = boto3.resource("dynamodb", region_name=REGION_NAME)
+    s3 = boto3.client("s3", region_name=REGION_NAME)
+else:
+    # For local testing we can paste the temporary AWS academy credentials above
+    dynamodb = boto3.resource(
+        "dynamodb",
+        region_name=REGION_NAME,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_session_token=AWS_SESSION_TOKEN
+    )
 
-s3 = boto3.client(
-    "s3",
-    region_name=REGION_NAME,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    aws_session_token=AWS_SESSION_TOKEN
-)
+    s3 = boto3.client(
+        "s3",
+        region_name=REGION_NAME,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_session_token=AWS_SESSION_TOKEN
+    )
 
 
 # HELPER FUNCTIONS
