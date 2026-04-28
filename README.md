@@ -1,19 +1,16 @@
-Local Setup
+Local Setup:
 
 Install dependencies:
 pip install -r requirements.txt
 
-For local testing, start AWS Academy Lab and update the placeholder credentials in app.py and music.py:
+For local testing, start AWS Academy Lab and update the placeholder credentials in app.py and music.py
 
 Initialise DynamoDB tables and upload images to S3:
 python music.py
 Run the Flask app locally:
 python app.py
 
-Open:
-http://127.0.0.1:5000
-
-EC2 Deployment Summary
+EC2 Deployment Summary:
 
 The app has been tested on EC2 using:
 sudo python3 -m gunicorn --workers 2 --bind 0.0.0.0:80 app:app
