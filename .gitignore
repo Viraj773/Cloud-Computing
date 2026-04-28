@@ -1,0 +1,9 @@
+.DS_Store
+test
+test_s3.py
+
+__pycache__/
+*.pyc
+app_old.py
+music_old.py
+.env
