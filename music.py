@@ -42,6 +42,13 @@ else:
         aws_session_token=AWS_SESSION_TOKEN
     )
 
+BUCKET_NAME = "s4098345-mybucket"
+
+LOGIN_TABLE = "login"
+MUSIC_TABLE = "music"
+SUBSCRIPTIONS_TABLE = "subscriptions"
+
+SONGS_FILE = "2026a2_songs.json"
 
 # HELPER FUNCTIONS
 
