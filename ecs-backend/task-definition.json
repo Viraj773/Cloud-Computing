@@ -1,0 +1,42 @@
+{
+  "family": "music-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::471627032276:role/LabRole",
+  "taskRoleArn":      "arn:aws:iam::471627032276:role/LabRole",
+  "containerDefinitions": [
+    {
+      "name": "music-app",
+      "image": "471627032276.dkr.ecr.us-east-1.amazonaws.com/music-app:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 5000, "hostPort": 5000, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "AWS_REGION",          "value": "us-east-1" },
+        { "name": "BUCKET_NAME",         "value": "s4098345-mybucket" },
+        { "name": "LOGIN_TABLE",         "value": "login" },
+        { "name": "MUSIC_TABLE",         "value": "music" },
+        { "name": "SUBSCRIPTIONS_TABLE", "value": "subscriptions" },
+        { "name": "FLASK_SECRET_KEY",    "value": "musicapp2026" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/music-app",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command":     ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"],
+        "interval":    30,
+        "timeout":     10,
+        "retries":     3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
