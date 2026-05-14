@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
+        .container { width: 400px; margin: 100px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #45a049; }
+        .error { color: red; text-align: center; }
+        a { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <p class="error" id="error"></p>
+        <label>Email:</label>
+        <input type="text" id="email"><br><br>
+        <label>Username:</label>
+        <input type="text" id="username"><br><br>
+        <label>Password:</label>
+        <input type="password" id="password"><br><br>
+        <button onclick="doRegister()">Register</button>
+        <p>Already have an account? <a href="login.html">Login</a></p>
+    </div>
+    <script>
+        const API = 'https://sb2o8gtbl0.execute-api.us-east-1.amazonaws.com/prod';
+        async function doRegister() {
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const res = await fetch(`${API}/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, user_name: username, password})
+            });
+            const data = await res.json();
+            if (res.status === 201) {
+                window.location.href = 'login.html';
+            } else {
+                document.getElementById('error').textContent = data.error || 'Registration failed';
+            }
+        }
+    </script>
+</body>
+</html>

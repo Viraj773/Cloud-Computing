@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
+        .container { width: 400px; margin: 100px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #45a049; }
+        .error { color: red; text-align: center; }
+        a { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <p class="error" id="error"></p>
+        <label>Email:</label>
+        <input type="text" id="email"><br><br>
+        <label>Password:</label>
+        <input type="password" id="password"><br><br>
+        <button onclick="doLogin()">Login</button>
+        <p>Don't have an account? <a href="register.html">Register</a></p>
+    </div>
+    <script>
+        const API = 'https://sb2o8gtbl0.execute-api.us-east-1.amazonaws.com/prod';
+        async function doLogin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const res = await fetch(`${API}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, password})
+            });
+            const data = await res.json();
+            if (data.email) {
+                sessionStorage.setItem('email', data.email);
+                sessionStorage.setItem('username', data.user_name);
+                window.location.href = 'main.html';
+            } else {
+                document.getElementById('error').textContent = data.error || 'email or password is invalid';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -17,13 +17,13 @@ COPY app.py         ./
 COPY templates/     ./templates/
 COPY static/        ./static/
 
-EXPOSE 5000
-USER appuser
+EXPOSE 80
+USER root
 
 # 4 workers suits a Fargate task with 1 vCPU / 2 GB RAM
 CMD ["gunicorn", "app:app", \
      "--workers", "4", \
-     "--bind", "0.0.0.0:5000", \
+     "--bind", "0.0.0.0:80", \
      "--timeout", "120", \
      "--access-logfile", "-", \
      "--error-logfile", "-"]

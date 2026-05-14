@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Main Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; }
+        .container { width: 800px; margin: 30px auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        input { padding: 8px; margin-top: 4px; width: 100%; box-sizing: border-box; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #45a049; }
+        .remove-btn { background-color: #f44336; }
+        .remove-btn:hover { background-color: #d32f2f; }
+        .error { color: red; }
+        .song-card { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 4px; display: flex; align-items: center; gap: 15px; }
+        .song-card img { width: 80px; height: 80px; object-fit: cover; }
+        a { color: #4CAF50; float: right; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <h2>Welcome, <span id="username"></span>!</h2>
+            <a href="login.html" onclick="logout()">Logout</a>
+        </div>
+        <hr>
+        <h3>Your Subscriptions</h3>
+        <div id="subscriptions"><p>Loading...</p></div>
+        <hr>
+        <h3>Search Songs</h3>
+        <label>Title:</label><input type="text" id="qTitle"><br><br>
+        <label>Artist:</label><input type="text" id="qArtist"><br><br>
+        <label>Year:</label><input type="text" id="qYear"><br><br>
+        <label>Album:</label><input type="text" id="qAlbum"><br><br>
+        <button onclick="doQuery()">Query</button>
+        <p class="error" id="queryMsg"></p>
+        <div id="queryResults"></div>
+    </div>
+    <script>
+        const API = 'https://sb2o8gtbl0.execute-api.us-east-1.amazonaws.com/prod';
+        const email = sessionStorage.getItem('email');
+        const username = sessionStorage.getItem('username');
+
+        if (!email) window.location.href = 'login.html';
+        document.getElementById('username').textContent = username;
+
+        function songCard(song, mode) {
+            const img = song.presigned_url ? `<img src="${song.presigned_url}" onerror="this.src=''">` : '';
+            const btn = mode === 'subscribe'
+                ? `<button onclick='subscribeSong(${JSON.stringify(song)})'>Subscribe</button>`
+                : `<button class="remove-btn" onclick='removeSong("${song.song_id}")'>Remove</button>`;
+            return `<div class="song-card">${img}<div>
+                <strong>${song.title}</strong><br>
+                Artist: ${song.artist}<br>
+                Year: ${song.year}<br>
+                Album: ${song.album}
+            </div>${btn}</div>`;
+        }
+
+        async function loadSubscriptions() {
+            try {
+                const res = await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`);
+                const data = await res.json();
+                const subs = data.subscriptions || [];
+                const el = document.getElementById('subscriptions');
+                el.innerHTML = subs.length ? subs.map(s => songCard(s, 'remove')).join('') : '<p>You have no subscriptions yet.</p>';
+            } catch(e) {
+                document.getElementById('subscriptions').innerHTML = '<p>Failed to load subscriptions.</p>';
+            }
+        }
+
+        async function subscribeSong(song) {
+            await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(song)
+            });
+            loadSubscriptions();
+        }
+
+        async function removeSong(song_id) {
+            await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({song_id})
+            });
+            loadSubscriptions();
+        }
+
+        async function doQuery() {
+            const title = document.getElementById('qTitle').value.trim();
+            const artist = document.getElementById('qArtist').value.trim();
+            const year = document.getElementById('qYear').value.trim();
+            const album = document.getElementById('qAlbum').value.trim();
+            document.getElementById('queryMsg').textContent = '';
+            document.getElementById('queryResults').innerHTML = '';
+
+            if (!title && !artist && !year && !album) {
+                document.getElementById('queryMsg').textContent = 'Please enter at least one search field.';
+                return;
+            }
+
+            const qs = new URLSearchParams({title, artist, year, album}).toString();
+            const res = await fetch(`${API}/query?${qs}`);
+            const data = await res.json();
+            const songs = data.songs || [];
+
+            if (!songs.length) {
+                document.getElementById('queryMsg').textContent = 'No result is retrieved. Please query again';
+            } else {
+                document.getElementById('queryResults').innerHTML = songs.map(s => songCard(s, 'subscribe')).join('');
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear();
+        }
+
+        loadSubscriptions();
+    </script>
+</body>
+</html>
