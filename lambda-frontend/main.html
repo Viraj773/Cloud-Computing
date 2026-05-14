@@ -38,86 +38,172 @@
         <div id="queryResults"></div>
     </div>
     <script>
-        const API = 'https://sb2o8gtbl0.execute-api.us-east-1.amazonaws.com/prod';
-        const email = sessionStorage.getItem('email');
-        const username = sessionStorage.getItem('username');
+            const API = 'https://9xba9bdes3.execute-api.us-east-1.amazonaws.com/prod';
 
-        if (!email) window.location.href = 'login.html';
-        document.getElementById('username').textContent = username;
+            const email = sessionStorage.getItem('email');
+            const username = sessionStorage.getItem('username');
 
-        function songCard(song, mode) {
-            const img = song.presigned_url ? `<img src="${song.presigned_url}" onerror="this.src=''">` : '';
-            const btn = mode === 'subscribe'
-                ? `<button onclick='subscribeSong(${JSON.stringify(song)})'>Subscribe</button>`
-                : `<button class="remove-btn" onclick='removeSong("${song.song_id}")'>Remove</button>`;
-            return `<div class="song-card">${img}<div>
-                <strong>${song.title}</strong><br>
-                Artist: ${song.artist}<br>
-                Year: ${song.year}<br>
-                Album: ${song.album}
-            </div>${btn}</div>`;
-        }
-
-        async function loadSubscriptions() {
-            try {
-                const res = await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`);
-                const data = await res.json();
-                const subs = data.subscriptions || [];
-                const el = document.getElementById('subscriptions');
-                el.innerHTML = subs.length ? subs.map(s => songCard(s, 'remove')).join('') : '<p>You have no subscriptions yet.</p>';
-            } catch(e) {
-                document.getElementById('subscriptions').innerHTML = '<p>Failed to load subscriptions.</p>';
+            if (!email) {
+                window.location.href = 'login.html';
             }
-        }
 
-        async function subscribeSong(song) {
-            await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(song)
-            });
+            document.getElementById('username').textContent = username || email;
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            function songCard(song, mode) {
+                const encodedSong = encodeURIComponent(JSON.stringify(song));
+
+                const img = song.presigned_url
+                    ? `<img src="${escapeHtml(song.presigned_url)}" onerror="this.style.display='none'">`
+                    : '';
+
+                const btn = mode === 'subscribe'
+                    ? `<button onclick="subscribeSong('${encodedSong}')">Subscribe</button>`
+                    : `<button class="remove-btn" onclick="removeSong('${escapeHtml(song.song_id)}')">Remove</button>`;
+
+                return `
+                    <div class="song-card">
+                        ${img}
+                        <div>
+                            <strong>${escapeHtml(song.title)}</strong><br>
+                            Artist: ${escapeHtml(song.artist)}<br>
+                            Year: ${escapeHtml(song.year)}<br>
+                            Album: ${escapeHtml(song.album)}
+                        </div>
+                        ${btn}
+                    </div>
+                `;
+            }
+
+            async function loadSubscriptions() {
+                try {
+                    const res = await fetch(`${API}/subscriptions`, {
+                        method: 'GET',
+                        headers: {
+                            'X-User-Email': email
+                        }
+                    });
+
+                    const data = await res.json();
+                    const subs = data.subscriptions || [];
+                    const el = document.getElementById('subscriptions');
+
+                    el.innerHTML = subs.length
+                        ? subs.map(s => songCard(s, 'remove')).join('')
+                        : '<p>You have no subscriptions yet.</p>';
+
+                } catch (e) {
+                    console.error('Load subscriptions failed:', e);
+                    document.getElementById('subscriptions').innerHTML = '<p>Failed to load subscriptions.</p>';
+                }
+            }
+
+            async function subscribeSong(encodedSong) {
+                const song = JSON.parse(decodeURIComponent(encodedSong));
+
+                try {
+                    const res = await fetch(`${API}/subscriptions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-User-Email': email
+                        },
+                        body: JSON.stringify(song)
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        alert(data.error || 'Failed to subscribe.');
+                        return;
+                    }
+
+                    await loadSubscriptions();
+
+                } catch (e) {
+                    console.error('Subscribe failed:', e);
+                    alert('Subscribe failed. Check console for details.');
+                }
+            }
+
+            async function removeSong(song_id) {
+                try {
+                    const res = await fetch(`${API}/subscriptions`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-User-Email': email
+                        },
+                        body: JSON.stringify({ song_id })
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        alert(data.error || 'Failed to remove subscription.');
+                        return;
+                    }
+
+                    await loadSubscriptions();
+
+                } catch (e) {
+                    console.error('Remove failed:', e);
+                    alert('Remove failed. Check console for details.');
+                }
+            }
+
+            async function doQuery() {
+                const title = document.getElementById('qTitle').value.trim();
+                const artist = document.getElementById('qArtist').value.trim();
+                const year = document.getElementById('qYear').value.trim();
+                const album = document.getElementById('qAlbum').value.trim();
+
+                document.getElementById('queryMsg').textContent = '';
+                document.getElementById('queryResults').innerHTML = '';
+
+                if (!title && !artist && !year && !album) {
+                    document.getElementById('queryMsg').textContent = 'Please enter at least one search field.';
+                    return;
+                }
+
+                try {
+                    const qs = new URLSearchParams();
+
+                    if (title) qs.append('title', title);
+                    if (artist) qs.append('artist', artist);
+                    if (year) qs.append('year', year);
+                    if (album) qs.append('album', album);
+
+                    const res = await fetch(`${API}/query?${qs.toString()}`);
+                    const data = await res.json();
+
+                    const songs = data.songs || data.results || [];
+
+                    if (!songs.length) {
+                        document.getElementById('queryMsg').textContent = data.error || 'No result is retrieved. Please query again';
+                    } else {
+                        document.getElementById('queryResults').innerHTML = songs.map(s => songCard(s, 'subscribe')).join('');
+                    }
+
+                } catch (e) {
+                    console.error('Query failed:', e);
+                    document.getElementById('queryMsg').textContent = 'Query failed. Check console for details.';
+                }
+            }
+
+            function logout() {
+                sessionStorage.clear();
+            }
+
             loadSubscriptions();
-        }
-
-        async function removeSong(song_id) {
-            await fetch(`${API}/subscriptions?email=${encodeURIComponent(email)}`, {
-                method: 'DELETE',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({song_id})
-            });
-            loadSubscriptions();
-        }
-
-        async function doQuery() {
-            const title = document.getElementById('qTitle').value.trim();
-            const artist = document.getElementById('qArtist').value.trim();
-            const year = document.getElementById('qYear').value.trim();
-            const album = document.getElementById('qAlbum').value.trim();
-            document.getElementById('queryMsg').textContent = '';
-            document.getElementById('queryResults').innerHTML = '';
-
-            if (!title && !artist && !year && !album) {
-                document.getElementById('queryMsg').textContent = 'Please enter at least one search field.';
-                return;
-            }
-
-            const qs = new URLSearchParams({title, artist, year, album}).toString();
-            const res = await fetch(`${API}/query?${qs}`);
-            const data = await res.json();
-            const songs = data.songs || [];
-
-            if (!songs.length) {
-                document.getElementById('queryMsg').textContent = 'No result is retrieved. Please query again';
-            } else {
-                document.getElementById('queryResults').innerHTML = songs.map(s => songCard(s, 'subscribe')).join('');
-            }
-        }
-
-        function logout() {
-            sessionStorage.clear();
-        }
-
-        loadSubscriptions();
-    </script>
+        </script>
 </body>
 </html>
